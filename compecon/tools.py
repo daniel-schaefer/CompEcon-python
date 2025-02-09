@@ -120,7 +120,7 @@ def jacobian(func, x, *args, **kwargs):
     #     F = lambda x: func(x, *args, **kwargs)[0]
     # else:
     #     F = lambda x: func(x, *args, **kwargs)
-    F = lambda z: func(z, *args, **kwargs)
+    F = lambda z: np.asarray(func(z, *args, **kwargs))
 
     x = np.asarray(x).flatten()
     dx = x.size
@@ -152,7 +152,7 @@ def jacobian(func, x, *args, **kwargs):
 
 def hess1(func, x, *args, **kwargs):
 
-    F = lambda z: func(z, *args, **kwargs)
+    F = lambda z: np.asarray(func(z, *args, **kwargs))
     x = np.asarray(x).flatten().astype(float)
 
     k = x.size
@@ -191,7 +191,7 @@ def hess1(func, x, *args, **kwargs):
 
 def hessian(func, x, *args, **kwargs):
 
-    F = lambda z: func(z, *args, **kwargs)
+    F = lambda z: np.asarray(func(z, *args, **kwargs))
     x = np.asarray(x).flatten().astype(float)
     if x.ndim < 2:
         x = np.atleast_2d(x).T
@@ -246,6 +246,7 @@ toc = lambda t: time.time() - t
 
 
 class Options_Container(dict):
+
     """ A container for groups of attributes
 
     Used to overwrite the _getitem_ and the _setitem__ methods to handle several items at once
@@ -254,13 +255,26 @@ class Options_Container(dict):
     description = 'A container class'
 
     def __getitem__(self, item):
+        """
+        Get (possibly several) attributes of the container.
+
+        Parameters
+        ----------
+        item: str or tuple(str)
+            The key(s) to recover
+        Returns
+        -------
+        Value(s)
+            The values stored in the container, either one element (if item is str) or a tuple (if item is a tuple)
+
+        """
         if isinstance(item, str):   # treat single key as list of length one
             return getattr(self, item)
         else:
             return (getattr(self, k) for k in item)
 
     def __setitem__(self, key, value):
-        if type(key) is type({'a':None}.keys()):  # looks ugly, but I couldn't access the dict_keys class directly
+        if type(key) is type({'a': None}.keys()):  # looks ugly, but I couldn't access the dict_keys class directly
             key = tuple(key)
 
         if type(key) is not tuple:
